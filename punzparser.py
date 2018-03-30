@@ -1,6 +1,10 @@
 from tok_expr import *
 from combinator import *
+<<<<<<< HEAD
 from punzal_ast import *
+=======
+from tree import *
+>>>>>>> 6c01e2df9f05864c3e6bd663de8c4dad72fc930b
 
 # Basic parsers
 
@@ -17,7 +21,11 @@ id = Tag(ID)
 
 
 # Top level parser
+<<<<<<< HEAD
 def punzal_parse(tokens):
+=======
+def imp_parse(tokens):
+>>>>>>> 6c01e2df9f05864c3e6bd663de8c4dad72fc930b
     ast = parser()(tokens, 0)
     return ast
 
@@ -32,16 +40,20 @@ def stmt_list():
     return Exp(stmt(), separator)
 
 
+<<<<<<< HEAD
 def stmt():
     return assign_stmt() | \
         if_stmt() | \
         while_stmt()
 
 
+=======
+>>>>>>> 6c01e2df9f05864c3e6bd663de8c4dad72fc930b
 def assign_stmt():
     def process(parsed):
         ((name, _), exp) = parsed
         return AssignStatement(name, exp)
+<<<<<<< HEAD
     return id + keyword('=') + arithmetic_expression() ^ process
 
 
@@ -113,11 +125,35 @@ def arithmetic_expression_group():
 
 
 def arithmetic_expression_value():
+=======
+    return id + keyword('=') + aexp() ^ process
+
+
+def arithmeticExp():
+    return precedence(arithmeticExp_term(),
+                      aexp_precedence_levels,
+                      process_binop)
+
+
+def arithmeticExp_term():
+    return arithmeticExp_value() | arithmeticExp_group()
+
+
+def arithmeticExp_group():
+    return keyword('(') + Lazy(arithmeticExp) + keyword(')') ^ process_group
+
+
+def arithmeticExp_value():
+>>>>>>> 6c01e2df9f05864c3e6bd663de8c4dad72fc930b
     return (num ^ (lambda i: RealArithmeticExp(i))) | \
            (id ^ (lambda v: VariableArithmeticExp(v)))
 
 
+<<<<<<< HEAD
 # An IMP-specific combinator for binary operator expressions (arithmetic_expression and bexp)
+=======
+# An IMP-specific combinator for binary operator expressions (aexp and bexp)
+>>>>>>> 6c01e2df9f05864c3e6bd663de8c4dad72fc930b
 def precedence(value_parser, precedence_levels, combine):
     def op_parser(precedence_level):
         return any_operator_in_list(precedence_level) ^ combine
@@ -126,6 +162,7 @@ def precedence(value_parser, precedence_levels, combine):
         parser = parser * op_parser(precedence_level)
     return parser
 
+<<<<<<< HEAD
 
 def process_binary_operation(op):
     return lambda l, r: BinaryOpArithmeticExp(op, l, r)
@@ -145,6 +182,11 @@ def process_logic(op):
         raise RuntimeError('unknown logic operator: ' + op)
 
 
+=======
+def process_binop(op):
+    return lambda l, r: BinaryOpArithmeticExp(op, l, r)
+
+>>>>>>> 6c01e2df9f05864c3e6bd663de8c4dad72fc930b
 def process_group(parsed):
     ((_, p), _) = parsed
     return p
@@ -158,6 +200,7 @@ def any_operator_in_list(ops):
 # Operator keywords and precedence levels
 
 
+<<<<<<< HEAD
 arithmetic_expression_precedence_levels = [
     ['*', '/'],
     ['+', '-'],
@@ -167,3 +210,9 @@ boolean_expression_precedence_levels = [
     ['and'],
     ['or'],
 ]
+=======
+aexp_precedence_levels = [
+    ['*', '/'],
+    ['+', '-'],
+]
+>>>>>>> 6c01e2df9f05864c3e6bd663de8c4dad72fc930b

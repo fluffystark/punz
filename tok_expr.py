@@ -3,7 +3,10 @@ import lexer
 RESERVED = 'RESERVED'
 INT = 'INT'
 ID = 'ID'
+<<<<<<< HEAD
 REAL = 'REAL'
+=======
+>>>>>>> 6c01e2df9f05864c3e6bd663de8c4dad72fc930b
 
 token_exprs = [
     (r'[ \n\t]+', None),     # nextline tab
@@ -37,7 +40,10 @@ token_exprs = [
     (r'Real', RESERVED),  # real number data type
     (r'Set', RESERVED),  # Set or an array
     (r'Function', RESERVED),  # Initializes a function
+<<<<<<< HEAD
     # (r'-?(\d+(\.\d*)?|\.\d+)', REAL),  # for real numbers
+=======
+>>>>>>> 6c01e2df9f05864c3e6bd663de8c4dad72fc930b
     (r'[0-9]+', INT),  # number has to be a float
     (r'[A-Za-z][A-Za-z0-9_]*', ID),  # identifier
 ]
