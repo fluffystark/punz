@@ -12,8 +12,9 @@ def keyword(kw):
 # we should change this to something representing real num
 
 
-num = Tag(INT) ^ (lambda i: int(i))
+num = Tag(COUNT) ^ (lambda i: int(i))
 id = Tag(ID)
+count = Tag(COUNT)
 
 
 # Top level parser
@@ -23,7 +24,7 @@ def punzal_parse(tokens):
 
 
 def parser():
-    return Phrase(func())
+    return Phrase(func_stmt())
 
 
 def block_stmt():
@@ -36,14 +37,17 @@ def block_stmt():
 def param_list():
     # variable = parser PROCESS function
     separator = keyword(',') ^ (lambda x: lambda l, r: ParameterExpression(l, r))
-    return Exp(param_stmt(), separator)
+    return Exp(declaration_stmt(), separator)
 
 
-def param_stmt():
-    return id
+def declaration_stmt():
+    def process(parsed):
+        (data_type, variable) = parsed
+        return DeclarationStatement(variable, data_type)
+    return any_data_type_in_list() + id ^ process
 
 
-def func():
+def func_stmt():
     def process(parsed):
         (((((_, name), _), parms), _), body) = parsed
         return FunctionStatement(name, parms, body)
@@ -230,6 +234,11 @@ def any_operator_in_list(ops):
     op_parsers = [keyword(op) for op in ops]
     parser = reduce(lambda l, r: l | r, op_parsers)
     return parser
+
+
+def any_data_type_in_list():
+    return keyword('Count') | keyword('Real')
+
 
 # Operator keywords and precedence levels
 

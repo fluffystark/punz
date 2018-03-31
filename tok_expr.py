@@ -1,7 +1,7 @@
 import lexer
 
 RESERVED = 'RESERVED'
-INT = 'INT'
+COUNT = 'COUNT'
 ID = 'ID'
 REAL = 'REAL'
 
@@ -35,11 +35,12 @@ token_exprs = [
     (r'while', RESERVED),  # while
     (r'do', RESERVED),  # do
     (r'end', RESERVED),  # idk for what
+    (r'Count', RESERVED),  # real number data type
     (r'Real', RESERVED),  # real number data type
     (r'Set', RESERVED),  # Set or an array
     (r'function', RESERVED),  # Initializes a function
     # (r'-?(\d+(\.\d*)?|\.\d+)', REAL),  # for real numbers
-    (r'[0-9]+', INT),  # number has to be a float
+    (r'[0-9]+', COUNT),  # number has to be a float
     (r'[A-Za-z][A-Za-z0-9_]*', ID),  # identifier
 ]
 

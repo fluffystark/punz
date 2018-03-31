@@ -13,6 +13,31 @@ class Bexp(Equality):
     pass
 
 
+class DeclarationStatement(Statement):
+    def __init__(self, name, data_type):
+        self.name = name
+        self.data_type = data_type
+
+    def __repr__(self):
+        return 'DeclarationStatement(%s, %s)' % (self.data_type, self.name)
+
+    def eval(self, env):
+        env[self.name] = {"TYPE": self.data_type, "VALUE": 0}
+
+
+class ParameterExpression(Statement):
+    def __init__(self, first, second):
+        self.first = first
+        self.second = second
+
+    def __repr__(self):
+        return 'ParameterExpression(%s, %s)' % (self.first, self.second)
+
+    def eval(self, env):
+        self.first.eval(env)
+        self.second.eval(env)
+
+
 class AssignStatement(Statement):
     def __init__(self, name, aexp):
         self.name = name
@@ -23,7 +48,14 @@ class AssignStatement(Statement):
 
     def eval(self, env):
         value = self.arithmeticExp.eval(env)
-        env[self.name] = value
+        var = env.find(self.name)[self.name]
+        var['VALUE'] = self.cast(var['TYPE'], value)
+
+    def cast(self, type, value):
+        if type == 'Count':
+            return int(value)
+        if type == 'Real':
+            return float(value)
 
 
 class CompoundStatement(Statement):
@@ -148,10 +180,7 @@ class VariableArithmeticExp(Aexp):
         return 'VariableArithmeticExp(%s)' % self.name
 
     def eval(self, env):
-        if self.name in env:
-            return env[self.name]
-        else:
-            return 0
+        return env.find(self.name)[self.name]['VALUE']
 
 
 class BinaryOpArithmeticExp(Aexp):
@@ -249,55 +278,24 @@ class NotBooleanExp(Bexp):
 
 
 class Env(dict):
-
-    def __init__(self, args={}, outer=None):
-        # Bind parm list to corresponding args, or single parm to list of args
+    def __init__(self, outer=None, stmt_list=list()):
         self.outer = outer
-        self.args = args
-        if isa(parms, TupleExp):
-            self.update({parms: list(args)})
-        else:
-            if len(args) != len(parms):
-                raise TypeError('expected %s, given %s, '
-                                % (to_string(parms), to_string(args)))
-            self.update(zip(parms, args))
+        self.stmt_list = stmt_list
 
     def find(self, var):
-
-        if var in self:
-            return self
-        elif self.outer is None:
-            raise LookupError(var)
-        else:
-            return self.outer.find(var)
-
-
-class ParameterExpression(Statement):
-    def __init__(self, first, second):
-        self.first = [first]
-        self.second = [second]
-        self.paramlist = list()
-        self.paramlist += self.first
-        self.paramlist += second
-
-    def __repr__(self):
-        return 'ParameterExpression(%s)' % (self.paramlist)
-
-    def eval(self, env):
-        print self.paramlist
-        for param in self.paramlist:
-            env[param] = 0
+        return self if (var in self) else self.outer.find(var)
 
 
 class BlockStatement(Statement):
     def __init__(self, stmt_list):
         self.stmt_list = stmt_list
-        self.env = {}
+        self.env = Env()
 
     def __repr__(self):
         return 'BlockStatement(%s, %s)' % (self.stmt_list, self.env)
 
-    def eval(self):
+    def eval(self, env):
+        Env.outer = env
         self.stmt_list.eval(self.env)
         print self.env
 
@@ -314,6 +312,6 @@ class FunctionStatement(object):
     def __call__(self, *args):
         return self.eval(self.body, Env(self.parms, args,))
 
-    def eval(self, env):
+    def eval(self, env=None):
         self.parms.eval(self.body.env)
-        self.body.eval()
+        self.body.eval(env)
