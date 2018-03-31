@@ -77,6 +77,7 @@ class Exp(Parser):
         next_parser = self.separator + self.parser ^ process_next
 
         next_result = result
+
         while next_result:
             next_result = next_parser(tokens, result.pos)
             if next_result:

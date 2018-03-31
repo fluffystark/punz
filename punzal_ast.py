@@ -40,18 +40,28 @@ class CompoundStatement(Statement):
 
 
 class IfStatement(Statement):
-    def __init__(self, condition, true_stmt, false_stmt):
+    def __init__(self, condition, true_stmt, false_stmt, elif_condition, elif_stmt):
         self.condition = condition
         self.true_stmt = true_stmt
         self.false_stmt = false_stmt
+        self.elif_condition = elif_condition
+        self.elif_stmt = elif_stmt
 
     def __repr__(self):
-        return 'IfStatement(%s, %s, %s)' % (self.condition, self.true_stmt, self.false_stmt)
+        return 'IfStatement(%s, %s)ElseIfStatement(%s, %s)ElseStatement(%s)' % (self.condition,
+                                                                                self.true_stmt,
+                                                                                self.elif_condition,
+                                                                                self.elif_stmt,
+                                                                                self.false_stmt)
 
     def eval(self, env):
         condition_value = self.condition.eval(env)
+        elif_condition_value = self.elif_condition(env)
         if condition_value:
             self.true_stmt.eval(env)
+        elif elif_condition_value:
+            if self.elif_stmt:
+                self.elif_stmt.eval(env)
         else:
             if self.false_stmt:
                 self.false_stmt.eval(env)

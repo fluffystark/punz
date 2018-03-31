@@ -34,7 +34,7 @@ def stmt_list():
 
 def stmt():
     return assign_stmt() | \
-        if_stmt() | \
+        selection_stmt() | \
         while_stmt()
 
 
@@ -45,23 +45,31 @@ def assign_stmt():
     return id + keyword('=') + arithmetic_expression() ^ process
 
 
-def if_stmt():
+def elseif_stmt():
+    return keyword('else if') + keyword('(') + boolean_expression() + keyword(')') +\
+        keyword('{') + Lazy(stmt_list) + keyword('}')
+
+
+def selection_stmt():
     def process(parsed):
-        (((((_, condition), _), true_stmt), false_parsed), _) = parsed
+        ((((((((_, _), condition), _), _), true_stmt), _), elif_parsed), false_parsed) = parsed
+        if elif_parsed:
+            ((((((_, _), elif_condition), _), _), elif_stmt), _) = elif_parsed
+        else:
+            elif_stmt = elif_condition = None
         if false_parsed:
-            (_, false_stmt) = false_parsed
+            (((_, _), false_stmt), _) = false_parsed
         else:
             false_stmt = None
-        return IfStatement(condition, true_stmt, false_stmt)
-    return keyword('if') + boolean_expression() + \
-        keyword('then') + Lazy(stmt_list) + \
-        Opt(keyword('else') + Lazy(stmt_list)) + \
-        keyword('end') ^ process
+        return IfStatement(condition, true_stmt, false_stmt, elif_condition, elif_stmt)
+    return keyword('if') + keyword('(') + boolean_expression() + keyword(')') +\
+        keyword('{') + Lazy(stmt_list) + keyword('}') + Opt(elseif_stmt()) + \
+        Opt(keyword('else') + keyword('{') + Lazy(stmt_list) + keyword('}')) ^ process
 
 
 def while_stmt():
     def process(parsed):
-        ((((_, condition), _), body), _) = parsed
+        ((((((_, _), condition), _), _), body), _) = parsed
         return WhileStatement(condition, body)
     return keyword('while') + keyword('(') + boolean_expression() + keyword(')') + \
         keyword('{') + Lazy(stmt_list) + \
