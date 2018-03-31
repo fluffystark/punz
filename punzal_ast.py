@@ -5,11 +5,11 @@ class Statement(Equality):
     pass
 
 
-class ArithmeticExp(Equality):
+class Aexp(Equality):
     pass
 
 
-class BooleanExp(Equality):
+class Bexp(Equality):
     pass
 
 
@@ -22,7 +22,7 @@ class AssignStatement(Statement):
         return 'AssignStatement(%s, %s)' % (self.name, self.arithmeticExp)
 
     def eval(self, env):
-        value = self.aexp.eval(env)
+        value = self.arithmeticExp.eval(env)
         env[self.name] = value
 
 
@@ -39,32 +39,63 @@ class CompoundStatement(Statement):
         self.second.eval(env)
 
 
-class IfStatement(Statement):
-    def __init__(self, condition, true_stmt, false_stmt, elif_condition, elif_stmt):
-        self.condition = condition
-        self.true_stmt = true_stmt
-        self.false_stmt = false_stmt
-        self.elif_condition = elif_condition
-        self.elif_stmt = elif_stmt
+class SelectionStatement(Statement):
+    def __init__(self, if_stmt, else_stmt):
+        self.if_stmt = if_stmt
+        # self.elif_group = elif_group
+        self.else_stmt = else_stmt
 
     def __repr__(self):
-        return 'IfStatement(%s, %s)ElseIfStatement(%s, %s)ElseStatement(%s)' % (self.condition,
-                                                                                self.true_stmt,
-                                                                                self.elif_condition,
-                                                                                self.elif_stmt,
-                                                                                self.false_stmt)
+        return 'SelectionStatement(%s, %s)' % (self.if_stmt, self.else_stmt)
+
+    def eval(self, env):
+        if_value = self.if_stmt.eval(env)
+        if if_value is None:
+            if self.else_stmt:
+                self.else_stmt.eval(env)
+
+
+class IfStatement(Statement):
+    def __init__(self, condition, body):
+        self.condition = condition
+        self.body = body
+
+    def __repr__(self):
+        return 'IfStatement(%s, %s)' % (self.condition, self.body)
 
     def eval(self, env):
         condition_value = self.condition.eval(env)
-        elif_condition_value = self.elif_condition(env)
         if condition_value:
-            self.true_stmt.eval(env)
-        elif elif_condition_value:
-            if self.elif_stmt:
-                self.elif_stmt.eval(env)
+            self.body.eval(env)
         else:
-            if self.false_stmt:
-                self.false_stmt.eval(env)
+            None
+
+
+class ElseIfStatement(Statement):
+    def __init__(self, condition, body):
+        self.condition = condition
+        self.body = body
+
+    def __repr__(self):
+        return 'ElseIfStatement(%s, %s)' % (self.condition, self.body)
+
+    def eval(self, env):
+        condition_value = self.condition.eval(env)
+        if condition_value:
+            self.body.eval(env)
+        else:
+            None
+
+
+class ElseStatement(Statement):
+    def __init__(self, stmt):
+        self.stmt = stmt
+
+    def __repr__(self):
+        return 'ElseStatement(%s)' % (self.stmt)
+
+    def eval(self, env):
+        self.stmt.eval(env)
 
 
 class WhileStatement(Statement):
@@ -98,7 +129,7 @@ class DoWhileStatement(Statement):
             condition_value = self.condition.eval(env)
 
 
-class RealArithmeticExp(ArithmeticExp):
+class RealArithmeticExp(Aexp):
     def __init__(self, r):
         self.r = r
 
@@ -109,7 +140,7 @@ class RealArithmeticExp(ArithmeticExp):
         return self.r
 
 
-class VariableArithmeticExp(ArithmeticExp):
+class VariableArithmeticExp(Aexp):
     def __init__(self, name):
         self.name = name
 
@@ -123,7 +154,7 @@ class VariableArithmeticExp(ArithmeticExp):
             return 0
 
 
-class BinaryOpArithmeticExp(ArithmeticExp):
+class BinaryOpArithmeticExp(Aexp):
     def __init__(self, op, left, right):
         self.op = op
         self.left = left
@@ -148,7 +179,7 @@ class BinaryOpArithmeticExp(ArithmeticExp):
         return value
 
 
-class RelOpBooleanExp(BooleanExp):
+class RelOpBooleanExp(Bexp):
     def __init__(self, op, left, right):
         self.op = op
         self.left = left
@@ -177,7 +208,7 @@ class RelOpBooleanExp(BooleanExp):
         return value
 
 
-class AndBooleanExp(BooleanExp):
+class AndBooleanExp(Bexp):
     def __init__(self, left, right):
         self.left = left
         self.right = right
@@ -191,7 +222,7 @@ class AndBooleanExp(BooleanExp):
         return left_value and right_value
 
 
-class OrBooleanExp(BooleanExp):
+class OrBooleanExp(Bexp):
     def __init__(self, left, right):
         self.left = left
         self.right = right
@@ -205,7 +236,7 @@ class OrBooleanExp(BooleanExp):
         return left_value or right_value
 
 
-class NotBooleanExp(BooleanExp):
+class NotBooleanExp(Bexp):
     def __init__(self, exp):
         self.exp = exp
 
@@ -215,3 +246,59 @@ class NotBooleanExp(BooleanExp):
     def eval(self, env):
         value = self.exp.eval(env)
         return not value
+
+
+class Env(dict):
+
+    def __init__(self, args={}, outer=None):
+        # Bind parm list to corresponding args, or single parm to list of args
+        self.outer = outer
+        self.args = args
+        if isa(parms, TupleExp):
+            self.update({parms: list(args)})
+        else:
+            if len(args) != len(parms):
+                raise TypeError('expected %s, given %s, '
+                                % (to_string(parms), to_string(args)))
+            self.update(zip(parms, args))
+
+    def find(self, var):
+
+        if var in self:
+            return self
+        elif self.outer is None:
+            raise LookupError(var)
+        else:
+            return self.outer.find(var)
+
+
+class BlockStatement(Statement):
+    def __init__(self, stmt_list):
+        self.stmt_list = stmt_list
+        self.env = {}
+
+    def __repr__(self):
+        return 'BlockStatement(%s)' % (self.stmt_list)
+
+    def eval(self, env):
+        self.stmt_list.eval(self.env)
+        # print self.env
+
+
+class FunctionStatement(object):
+
+    def __init__(self, name, parms, body):
+        self.name, self.body = name, body
+
+        for parm in parms:
+            self.body.env[parm] = 0
+
+    # def __repr__(self):
+        # return 'FunctionStatement(%s %s)' % (self.name, self.body)
+
+    def __call__(self, *args):
+        return self.eval(self.body, Env(self.parms, args,))
+
+    def eval(self, env):
+        self.body.eval(self.env)
+        print self.env

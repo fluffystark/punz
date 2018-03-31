@@ -23,7 +23,32 @@ def punzal_parse(tokens):
 
 
 def parser():
-    return Phrase(stmt_list())
+    return Phrase(block_stmt())
+
+
+def block_stmt():
+    def process(parsed):
+        ((_, stmt), _) = parsed
+        return BlockStatement(stmt)
+    return keyword('{') + stmt_list() + keyword('}') ^ process
+
+
+def param_list():
+    # variable = parser PROCESS function
+    separator = keyword(',') ^ (lambda x: lambda l, r: CompoundStatement(l, r))
+    return Exp(param_stmt(), separator)
+
+
+def param_stmt():
+    return id
+
+
+def func():
+    def process(parsed):
+        (((((_, name), _), parms), _), body) = parsed
+        print name + parms + body
+        return FunctionStatement(name, parms, body)
+    return keyword('function') + id + keyword('(') + param_list() + keyword(')') + block_stmt()
 
 
 # Statements
@@ -45,26 +70,70 @@ def assign_stmt():
     return id + keyword('=') + arithmetic_expression() ^ process
 
 
+def if_stmt():
+    def process(parsed):
+        ((((((_, _), condition), _), _), body), _) = parsed
+        return IfStatement(condition, body)
+    return keyword('if') + keyword('(') + boolean_expression() + keyword(')') +\
+        keyword('{') + Lazy(stmt_list) + keyword('}') ^ process
+
+
+def else_stmt():
+    def process(parsed):
+        (((_, _), stmt), _) = parsed
+        return ElseStatement(stmt)
+    return keyword('else') + keyword('{') + Lazy(stmt_list) + keyword('}') ^ process
+
+
+def elseif_term():
+    return elseif_stmt() | \
+        elseif_group()
+
+
 def elseif_stmt():
+    def process(parsed):
+        ((((((_, _), condition), _), _), body), _) = parsed
+        return ElseIfStatement(condition, body)
     return keyword('else if') + keyword('(') + boolean_expression() + keyword(')') +\
         keyword('{') + Lazy(stmt_list) + keyword('}')
 
 
+def elseif_group():
+    def process(parsed):
+            ((((((((_, _), condition), _), _), true_stmt), _), elif_parsed), false_parsed) = parsed
+            if elif_parsed:
+                ((((((_, _), elif_condition), _), _), elif_stmt), _) = elif_parsed
+            else:
+                elif_stmt = elif_condition = None
+            if false_parsed:
+                (((_, _), false_stmt), _) = false_parsed
+            else:
+                false_stmt = None
+            return IfStatement(condition, true_stmt, false_stmt, elif_condition, elif_stmt)
+    return Lazy(elseif_stmt()) + Opt(elseif_term()) ^ process
+
+
 def selection_stmt():
     def process(parsed):
-        ((((((((_, _), condition), _), _), true_stmt), _), elif_parsed), false_parsed) = parsed
-        if elif_parsed:
-            ((((((_, _), elif_condition), _), _), elif_stmt), _) = elif_parsed
-        else:
-            elif_stmt = elif_condition = None
-        if false_parsed:
-            (((_, _), false_stmt), _) = false_parsed
-        else:
-            false_stmt = None
-        return IfStatement(condition, true_stmt, false_stmt, elif_condition, elif_stmt)
-    return keyword('if') + keyword('(') + boolean_expression() + keyword(')') +\
-        keyword('{') + Lazy(stmt_list) + keyword('}') + Opt(elseif_stmt()) + \
-        Opt(keyword('else') + keyword('{') + Lazy(stmt_list) + keyword('}')) ^ process
+        (if_stmt, else_stmt) = parsed
+        return SelectionStatement(if_stmt, else_stmt)
+    return if_stmt() + Opt(else_stmt()) ^ process
+
+# def selection_stmt():
+#     def process(parsed):
+#         ((((((((_, _), condition), _), _), true_stmt), _), elif_parsed), false_parsed) = parsed
+#         if elif_parsed:
+#             ((((((_, _), elif_condition), _), _), elif_stmt), _) = elif_parsed
+#         else:
+#             elif_stmt = elif_condition = None
+#         if false_parsed:
+#             (((_, _), false_stmt), _) = false_parsed
+#         else:
+#             false_stmt = None
+#         return IfStatement(condition, true_stmt, false_stmt, elif_condition, elif_stmt)
+#     return keyword('if') + keyword('(') + boolean_expression() + keyword(')') +\
+#         keyword('{') + Lazy(stmt_list) + keyword('}') + Opt(elseif_stmt()) + \
+#         Opt(keyword('else') + keyword('{') + Lazy(stmt_list) + keyword('}')) ^ process
 
 
 def while_stmt():

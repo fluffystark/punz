@@ -7,8 +7,8 @@ def usage():
     sys.exit(1)
 
 if __name__ == '__main__':
-    if len(sys.argv) != 2:
-        usage()
+    # if len(sys.argv) != 2:
+    #     usage()
     filename = 'foo.imp'
     text = open(filename).read()
     tokens = lex_tokens(text)

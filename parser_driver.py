@@ -11,6 +11,6 @@ if __name__ == '__main__':
     characters = file.read()
     file.close()
     tokens = lex_tokens(characters)
-    parser = stmt()
+    parser = func()
     result = parser(tokens, 0)
     print result

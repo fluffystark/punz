@@ -14,6 +14,7 @@ token_exprs = [
     (r'}', RESERVED),       # block end
     (r'\.', RESERVED),       # member
     (r'=', RESERVED),        # =
+    (r',', RESERVED),        # ;
     (r';', RESERVED),        # ;
     (r'\*', RESERVED),       # *
     (r'/', RESERVED),        # /
@@ -36,7 +37,7 @@ token_exprs = [
     (r'end', RESERVED),  # idk for what
     (r'Real', RESERVED),  # real number data type
     (r'Set', RESERVED),  # Set or an array
-    (r'Function', RESERVED),  # Initializes a function
+    (r'function', RESERVED),  # Initializes a function
     # (r'-?(\d+(\.\d*)?|\.\d+)', REAL),  # for real numbers
     (r'[0-9]+', INT),  # number has to be a float
     (r'[A-Za-z][A-Za-z0-9_]*', ID),  # identifier

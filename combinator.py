@@ -5,7 +5,7 @@ class Result:
         self.pos = pos
 
     def __repr__(self):
-        return 'Result(%s, %d' % (self.value, self.pos)
+        return 'Result(%s, %d)' % (self.value, self.pos)
 
 
 class Parser:
