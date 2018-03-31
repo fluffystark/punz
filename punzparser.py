@@ -23,7 +23,7 @@ def punzal_parse(tokens):
 
 
 def parser():
-    return Phrase(block_stmt())
+    return Phrase(func())
 
 
 def block_stmt():
@@ -35,7 +35,7 @@ def block_stmt():
 
 def param_list():
     # variable = parser PROCESS function
-    separator = keyword(',') ^ (lambda x: lambda l, r: CompoundStatement(l, r))
+    separator = keyword(',') ^ (lambda x: lambda l, r: ParameterExpression(l, r))
     return Exp(param_stmt(), separator)
 
 
@@ -46,9 +46,8 @@ def param_stmt():
 def func():
     def process(parsed):
         (((((_, name), _), parms), _), body) = parsed
-        print name + parms + body
         return FunctionStatement(name, parms, body)
-    return keyword('function') + id + keyword('(') + param_list() + keyword(')') + block_stmt()
+    return keyword('function') + id + keyword('(') + param_list() + keyword(')') + block_stmt() ^ process
 
 
 # Statements

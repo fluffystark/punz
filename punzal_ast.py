@@ -272,33 +272,48 @@ class Env(dict):
             return self.outer.find(var)
 
 
+class ParameterExpression(Statement):
+    def __init__(self, first, second):
+        self.first = [first]
+        self.second = [second]
+        self.paramlist = list()
+        self.paramlist += self.first
+        self.paramlist += second
+
+    def __repr__(self):
+        return 'ParameterExpression(%s)' % (self.paramlist)
+
+    def eval(self, env):
+        print self.paramlist
+        for param in self.paramlist:
+            env[param] = 0
+
+
 class BlockStatement(Statement):
     def __init__(self, stmt_list):
         self.stmt_list = stmt_list
         self.env = {}
 
     def __repr__(self):
-        return 'BlockStatement(%s)' % (self.stmt_list)
+        return 'BlockStatement(%s, %s)' % (self.stmt_list, self.env)
 
-    def eval(self, env):
+    def eval(self):
         self.stmt_list.eval(self.env)
-        # print self.env
+        print self.env
 
 
 class FunctionStatement(object):
 
     def __init__(self, name, parms, body):
         self.name, self.body = name, body
+        self.parms = parms
 
-        for parm in parms:
-            self.body.env[parm] = 0
-
-    # def __repr__(self):
-        # return 'FunctionStatement(%s %s)' % (self.name, self.body)
+    def __repr__(self):
+        return 'FunctionStatement(%s, %s)' % (self.name, self.body)
 
     def __call__(self, *args):
         return self.eval(self.body, Env(self.parms, args,))
 
     def eval(self, env):
-        self.body.eval(self.env)
-        print self.env
+        self.parms.eval(self.body.env)
+        self.body.eval()

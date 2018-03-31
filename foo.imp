@@ -1,3 +1,8 @@
 function water(x,y){
-    z = 5 + x
+    z = 5 + x;
+    x = 4;
+    while(x>0){
+        x = x-1
+    };
+    c = 12
 }
