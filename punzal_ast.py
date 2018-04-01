@@ -446,5 +446,19 @@ class NotBooleanExp(Bexp):
         return not value
 
 
-# class Set(Statement):
-#     def __init__()
+class Set(Statement):
+    def __init__(self, variable, size, data_type):
+        self.name = variable
+        self.size = size
+        self.data_type = data_type
+
+    def __repr__(self):
+        return 'Set(%s %s %s)' % (self.name, self.size, self.data_type)
+
+    def eval(self, env):
+        env[self.name] = {"TYPE": self.data_type, "VALUE": list()}
+        i = 0
+        while(i < self.size.eval(env)):
+            env[self.name]['VALUE'].append(0)
+            i += 1
+        return self.name

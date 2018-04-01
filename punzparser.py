@@ -67,24 +67,22 @@ def param_list():
 
 
 def declaration_stmt():
+    return primitive_declaration() | aggregate_declaration()
+
+
+def primitive_declaration():
     def process(parsed):
-        (data_type, variable) = parsed
+        ((data_type, variable), _) = parsed
         return DeclarationStatement(variable, data_type)
-    return any_data_type_in_list() + id ^ process
+    return any_data_type_in_list() + id + Opt(keyword(';')) ^ process
 
 
-# def primitive_declaration():
-#     def process(parsed):
-#         (data_type, variable) = parsed
-#         return DeclarationStatement(variable, data_type)
-#     return any_data_type_in_list() + id ^ process
-
-
-# def aggregate_declaration():
-#     def process(parsed):
-#         (data_type, variable) = parsed
-#         return DeclarationStatement(variable, data_type)
-#     return keyword('Set') + id + keyword('[') +  + keyword(']') ^ process
+def aggregate_declaration():
+    def process(parsed):
+        (((((data_type, variable), _), size), _), _) = parsed
+        return Set(variable, size, data_type)
+    return keyword('Set') + id + keyword('[') + \
+        arithmetic_expression_value() + keyword(']') + Opt(keyword(';')) ^ process
 
 
 # Statements
@@ -99,7 +97,8 @@ def stmt():
     return assign_stmt() | \
         selection_stmt() | \
         iteration_stmt() | \
-        func_call()
+        func_call() | \
+        declaration_stmt()
 
 
 def return_stmt():
@@ -161,22 +160,6 @@ def selection_stmt():
         ((if_stmt, elseif_stmt,), else_stmt) = parsed
         return SelectionStatement(if_stmt, elseif_stmt, else_stmt)
     return if_stmt() + Opt(elseif_list()) + Opt(else_stmt()) ^ process
-
-# def selection_stmt():
-#     def process(parsed):
-#         ((((((((_, _), condition), _), _), true_stmt), _), elif_parsed), false_parsed) = parsed
-#         if elif_parsed:
-#             ((((((_, _), elif_condition), _), _), elif_stmt), _) = elif_parsed
-#         else:
-#             elif_stmt = elif_condition = None
-#         if false_parsed:
-#             (((_, _), false_stmt), _) = false_parsed
-#         else:
-#             false_stmt = None
-#         return IfStatement(condition, true_stmt, false_stmt, elif_condition, elif_stmt)
-#     return keyword('if') + keyword('(') + boolean_expression() + keyword(')') +\
-#         keyword('{') + Lazy(stmt_list) + keyword('}') + Opt(elseif_stmt()) + \
-#         Opt(keyword('else') + keyword('{') + Lazy(stmt_list) + keyword('}')) ^ process
 
 
 def iteration_stmt():

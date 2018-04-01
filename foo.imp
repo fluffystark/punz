@@ -24,6 +24,6 @@ function main(Count x,Count y, Count z, Count c){
     }else{
         z=3;
     }
-    Count l = 10;
-    z = water(1, 7, 0);
+    Count l;
+    Set array[ 10 ];
 }
