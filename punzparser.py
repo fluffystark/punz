@@ -55,9 +55,9 @@ def args_list():
 
 def block_stmt():
     def process(parsed):
-        ((_, stmt), _) = parsed
-        return BlockStatement(stmt)
-    return keyword('{') + stmt_list() + keyword('}') ^ process
+        (((_, stmt), return_stmt), _) = parsed
+        return BlockStatement(stmt, return_stmt)
+    return keyword('{') + stmt_list() + Opt(return_stmt()) + keyword('}') ^ process
 
 
 def param_list():
@@ -71,6 +71,20 @@ def declaration_stmt():
         (data_type, variable) = parsed
         return DeclarationStatement(variable, data_type)
     return any_data_type_in_list() + id ^ process
+
+
+# def primitive_declaration():
+#     def process(parsed):
+#         (data_type, variable) = parsed
+#         return DeclarationStatement(variable, data_type)
+#     return any_data_type_in_list() + id ^ process
+
+
+# def aggregate_declaration():
+#     def process(parsed):
+#         (data_type, variable) = parsed
+#         return DeclarationStatement(variable, data_type)
+#     return keyword('Set') + id + keyword('[') +  + keyword(']') ^ process
 
 
 # Statements
@@ -88,18 +102,28 @@ def stmt():
         func_call()
 
 
-def returnstmt():
+def return_stmt():
     def process(parsed):
         ((_, ret), _) = parsed
         return ReturnStatement(ret)
-    return keyword('return') + arithmetic_expression_value() + keyword(';') ^ process
+    return keyword('return') + arithmetic_expression() + keyword(';') ^ process
 
 
 def assign_stmt():
     def process(parsed):
-        (((name, _), exp), _) = parsed
+        ((name, _), exp) = parsed
+        if type(exp) is tuple:
+            (exp, _) = exp
         return AssignStatement(name, exp)
-    return id + keyword('=') + arithmetic_expression() + keyword(';') ^ process
+    return assignment_term() + keyword('=') + assignment_group() ^ process
+
+
+def assignment_term():
+    return declaration_stmt() | id
+
+
+def assignment_group():
+    return arithmetic_expression() + keyword(';') | func_call()
 
 
 def if_stmt():

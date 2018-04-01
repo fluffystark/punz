@@ -25,8 +25,9 @@ class Env(dict):
 
 
 class BlockStatement(Statement):
-    def __init__(self, stmt_list):
+    def __init__(self, stmt_list, return_stmt):
         self.stmt_list = stmt_list
+        self.return_stmt = return_stmt
         self.env = Env()
 
     def __repr__(self):
@@ -35,6 +36,8 @@ class BlockStatement(Statement):
     def eval(self, env):
         self.env.outer = env
         self.stmt_list.eval(self.env)
+        if self.return_stmt is not None:
+            self.return_stmt.eval(env)
 
 
 class FunctionDict(Statement):
@@ -60,8 +63,20 @@ class FunctionCall(Statement):
 
     def eval(self, env=Env()):
         var = env.funcdict[self.name]
-        arg_list = appendlist(self.args.eval(env))
-        print var(arg_list)
+        arg_list = self.appendlist(self.args.eval(env))
+        return var(arg_list)
+
+    def appendlist(self, x=list()):
+        ret = list()
+        if type(x) is list:
+            for i in x:
+                if type(i) is list:
+                    ret = self.appendlist(i)
+                else:
+                    ret.append(i)
+        else:
+            ret.append(x)
+        return ret
 
 
 class ReturnStatement(Statement):
@@ -72,30 +87,36 @@ class ReturnStatement(Statement):
         return 'ReturnStatement(%s)' % (self.ret)
 
     def eval(self, env=None):
-        var = env.find(self.name)[self.name]
-        var['BODY'](self.args)
+        print type(self.ret)
+        if type(self.ret) is int:
+            pass
+        elif type(self.ret) is not str:
+            self.ret = self.ret.eval(env)
+
+        env['return']['VALUE'] = self.ret
 
 
 class FunctionStatement(object):
     def __init__(self, name, parms, body):
         self.name, self.body = name, body
         self.parms = parms
+        self.body.env['return'] = {"TYPE": 'Real', "VALUE": 0}
 
     def __repr__(self):
         return 'FunctionStatement(%s, %s\n)' % (self.name, self.body)
 
-    def __call__(self, args, env=Env()):
-        params = self.appendlist(self.parms.eval(env))
+    def __call__(self, args):
+        params = self.appendlist(self.parms.eval(self.body.env))
         for parm, arg in zip(params, args):
-            var = env.find(self.parm)[self.parm]
+            var = self.body.env.find(parm)[parm]
             var['VALUE'] = self.cast(var['TYPE'], arg)
-        for var in env:
-            print var
-        return self.body.eval(env)
+        self.body.eval(self.body.env)
+        return self.body.env['return']['VALUE']
 
     def eval(self, env=Env()):
         self.parms.eval(self.body.env)
         self.body.eval(self.body.env)
+        print self.body.env
 
     def appendlist(self, x=list()):
         ret = list()
@@ -105,6 +126,12 @@ class FunctionStatement(object):
             else:
                 ret.append(i)
         return ret
+
+    def cast(self, type, value):
+        if type == 'Count':
+            return int(value)
+        if type == 'Real':
+            return float(value)
 
 
 class DeclarationStatement(Statement):
@@ -154,14 +181,16 @@ class AssignStatement(Statement):
         return 'AssignStatement(%s, %s)\n' % (self.name, self.arithmeticExp)
 
     def eval(self, env):
+        if type(self.name) is not str:
+            self.name = self.name.eval(env)
         value = self.arithmeticExp.eval(env)
-        var = env.find(self.name)[self.name]
-        var['VALUE'] = self.cast(var['TYPE'], value)
+        var = env.find(self.name)
+        var[self.name]['VALUE'] = self.cast(var[self.name]['TYPE'], value)
 
-    def cast(self, type, value):
-        if type == 'Count':
+    def cast(self, data_type, value):
+        if data_type == 'Count':
             return int(value)
-        if type == 'Real':
+        if data_type == 'Real':
             return float(value)
 
 
@@ -415,3 +444,7 @@ class NotBooleanExp(Bexp):
     def eval(self, env):
         value = self.exp.eval(env)
         return not value
+
+
+# class Set(Statement):
+#     def __init__()

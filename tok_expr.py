@@ -16,6 +16,8 @@ token_exprs = [
     (r'=', RESERVED),        # =
     (r',', RESERVED),        # ;
     (r';', RESERVED),        # ;
+    (r'\[', RESERVED),        # [
+    (r'\]', RESERVED),        # ]
     (r'\*', RESERVED),       # *
     (r'/', RESERVED),        # /
     (r'\+', RESERVED),       # +
@@ -34,7 +36,7 @@ token_exprs = [
     (r'else', RESERVED),  # else
     (r'while', RESERVED),  # while
     (r'do', RESERVED),  # do
-    (r'return', RESERVED),  # do
+    (r'return', RESERVED),  # return
     (r'print', RESERVED),  # print
     (r'end', RESERVED),  # idk for what
     (r'Count', RESERVED),  # real number data type
