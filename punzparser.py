@@ -27,6 +27,13 @@ def parser():
     return Phrase(func_stmt())
 
 
+def func_stmt():
+    def process(parsed):
+        (((((_, name), _), parms), _), body) = parsed
+        return FunctionStatement(name, parms, body)
+    return keyword('function') + id + keyword('(') + param_list() + keyword(')') + block_stmt() ^ process
+
+
 def block_stmt():
     def process(parsed):
         ((_, stmt), _) = parsed
@@ -47,30 +54,27 @@ def declaration_stmt():
     return any_data_type_in_list() + id ^ process
 
 
-def func_stmt():
-    def process(parsed):
-        (((((_, name), _), parms), _), body) = parsed
-        return FunctionStatement(name, parms, body)
-    return keyword('function') + id + keyword('(') + param_list() + keyword(')') + block_stmt() ^ process
-
-
 # Statements
 def stmt_list():
-    separator = keyword(';') ^ (lambda x: lambda l, r: CompoundStatement(l, r))
-    return Exp(stmt(), separator)
+    # separator = keyword(';') ^ (lambda x: lambda l, r: CompoundStatement(l, r))
+    # return Exp(stmt(), separator)
+    def process(parsed):
+        stmt_list = parsed
+        return StatementList(stmt_list)
+    return Rep(stmt()) ^ process
 
 
 def stmt():
     return assign_stmt() | \
         selection_stmt() | \
-        while_stmt()
+        iteration_stmt()
 
 
 def assign_stmt():
     def process(parsed):
-        ((name, _), exp) = parsed
+        (((name, _), exp), _) = parsed
         return AssignStatement(name, exp)
-    return id + keyword('=') + arithmetic_expression() ^ process
+    return id + keyword('=') + arithmetic_expression() + keyword(';') ^ process
 
 
 def if_stmt():
@@ -88,39 +92,26 @@ def else_stmt():
     return keyword('else') + keyword('{') + Lazy(stmt_list) + keyword('}') ^ process
 
 
-def elseif_term():
-    return elseif_stmt() | \
-        elseif_group()
-
-
 def elseif_stmt():
     def process(parsed):
         ((((((_, _), condition), _), _), body), _) = parsed
         return ElseIfStatement(condition, body)
     return keyword('else if') + keyword('(') + boolean_expression() + keyword(')') +\
-        keyword('{') + Lazy(stmt_list) + keyword('}')
+        keyword('{') + Lazy(stmt_list) + keyword('}') ^ process
 
 
-def elseif_group():
+def elseif_list():
     def process(parsed):
-            ((((((((_, _), condition), _), _), true_stmt), _), elif_parsed), false_parsed) = parsed
-            if elif_parsed:
-                ((((((_, _), elif_condition), _), _), elif_stmt), _) = elif_parsed
-            else:
-                elif_stmt = elif_condition = None
-            if false_parsed:
-                (((_, _), false_stmt), _) = false_parsed
-            else:
-                false_stmt = None
-            return IfStatement(condition, true_stmt, false_stmt, elif_condition, elif_stmt)
-    return Lazy(elseif_stmt()) + Opt(elseif_term()) ^ process
+        elif_list = parsed
+        return ElseIfList(elif_list)
+    return Rep(elseif_stmt()) ^ process
 
 
 def selection_stmt():
     def process(parsed):
-        (if_stmt, else_stmt) = parsed
-        return SelectionStatement(if_stmt, else_stmt)
-    return if_stmt() + Opt(else_stmt()) ^ process
+        ((if_stmt, elseif_stmt,), else_stmt) = parsed
+        return SelectionStatement(if_stmt, elseif_stmt, else_stmt)
+    return if_stmt() + Opt(elseif_list()) + Opt(else_stmt()) ^ process
 
 # def selection_stmt():
 #     def process(parsed):
@@ -139,6 +130,10 @@ def selection_stmt():
 #         Opt(keyword('else') + keyword('{') + Lazy(stmt_list) + keyword('}')) ^ process
 
 
+def iteration_stmt():
+    return while_stmt() | do_while_stmt()
+
+
 def while_stmt():
     def process(parsed):
         ((((((_, _), condition), _), _), body), _) = parsed
@@ -146,6 +141,15 @@ def while_stmt():
     return keyword('while') + keyword('(') + boolean_expression() + keyword(')') + \
         keyword('{') + Lazy(stmt_list) + \
         keyword('}') ^ process
+
+
+def do_while_stmt():
+    def process(parsed):
+        (((((((_, _), body), _), _), _), condition), _) = parsed
+        return DoWhileStatement(condition, body)
+    return keyword('do') + keyword('{') + Lazy(stmt_list) + \
+        keyword('}') + keyword('while') + keyword('(') + boolean_expression() + keyword(')') ^ process
+
 
 # Boolean expressions
 

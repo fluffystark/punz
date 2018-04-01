@@ -13,6 +13,46 @@ class Bexp(Equality):
     pass
 
 
+class Env(dict):
+    def __init__(self, outer=None, stmt_list=list()):
+        self.outer = outer
+        self.stmt_list = stmt_list
+
+    def find(self, var):
+        return self if (var in self) else self.outer.find(var)
+
+
+class BlockStatement(Statement):
+    def __init__(self, stmt_list):
+        self.stmt_list = stmt_list
+        self.env = Env()
+
+    def __repr__(self):
+        return 'BlockStatement(%s, %s)' % (self.stmt_list, self.env)
+
+    def eval(self, env):
+        Env.outer = env
+        self.stmt_list.eval(self.env)
+        print self.env
+
+
+class FunctionStatement(object):
+
+    def __init__(self, name, parms, body):
+        self.name, self.body = name, body
+        self.parms = parms
+
+    def __repr__(self):
+        return 'FunctionStatement(%s, %s)' % (self.name, self.body)
+
+    def __call__(self, *args):
+        return self.eval(self.body, Env(self.parms, args,))
+
+    def eval(self, env=None):
+        self.parms.eval(self.body.env)
+        self.body.eval(env)
+
+
 class DeclarationStatement(Statement):
     def __init__(self, name, data_type):
         self.name = name
@@ -58,6 +98,18 @@ class AssignStatement(Statement):
             return float(value)
 
 
+class StatementList(Statement):
+    def __init__(self, statement_list=list()):
+        self.statement_list = statement_list
+
+    def __repr__(self):
+        return 'StatementList(%s)' % (self.statement_list)
+
+    def eval(self, env):
+        for statement in self.statement_list:
+            statement.eval(env)
+
+
 class CompoundStatement(Statement):
     def __init__(self, first, second):
         self.first = first
@@ -72,19 +124,25 @@ class CompoundStatement(Statement):
 
 
 class SelectionStatement(Statement):
-    def __init__(self, if_stmt, else_stmt):
+    def __init__(self, if_stmt, elif_group, else_stmt):
         self.if_stmt = if_stmt
-        # self.elif_group = elif_group
+        self.elif_group = elif_group
         self.else_stmt = else_stmt
 
     def __repr__(self):
-        return 'SelectionStatement(%s, %s)' % (self.if_stmt, self.else_stmt)
+        return 'SelectionStatement(%s, %s, %s)' % (self.if_stmt, self.elif_group, self.else_stmt)
 
     def eval(self, env):
         if_value = self.if_stmt.eval(env)
         if if_value is None:
-            if self.else_stmt:
-                self.else_stmt.eval(env)
+            if self.elif_group is not None:
+                elif_val = self.elif_group.eval(env)
+                if elif_val is None:
+                    if self.else_stmt:
+                        self.else_stmt.eval(env)
+            else:
+                if self.else_stmt:
+                    self.else_stmt.eval(env)
 
 
 class IfStatement(Statement):
@@ -101,6 +159,19 @@ class IfStatement(Statement):
             self.body.eval(env)
         else:
             None
+
+
+class ElseIfList(Statement):
+    def __init__(self, elif_list=list()):
+        self.elif_list = elif_list
+
+    def __repr__(self):
+        return 'ElseIfList(%s)' % (self.elif_list)
+
+    def eval(self, env):
+        for elif_stmt in self.elif_list:
+            if elif_stmt.eval(env) is None:
+                break
 
 
 class ElseIfStatement(Statement):
@@ -134,15 +205,17 @@ class WhileStatement(Statement):
     def __init__(self, condition, body):
         self.condition = condition
         self.body = body
+        self.env = Env()
 
     def __repr__(self):
         return 'WhileStatement(%s, %s)' % (self.condition, self.body)
 
     def eval(self, env):
-        condition_value = self.condition.eval(env)
+        self.env.outer = env
+        condition_value = self.condition.eval(self.env)
         while condition_value:
             self.body.eval(env)
-            condition_value = self.condition.eval(env)
+            condition_value = self.condition.eval(self.env)
 
 
 class DoWhileStatement(Statement):
@@ -276,42 +349,3 @@ class NotBooleanExp(Bexp):
         value = self.exp.eval(env)
         return not value
 
-
-class Env(dict):
-    def __init__(self, outer=None, stmt_list=list()):
-        self.outer = outer
-        self.stmt_list = stmt_list
-
-    def find(self, var):
-        return self if (var in self) else self.outer.find(var)
-
-
-class BlockStatement(Statement):
-    def __init__(self, stmt_list):
-        self.stmt_list = stmt_list
-        self.env = Env()
-
-    def __repr__(self):
-        return 'BlockStatement(%s, %s)' % (self.stmt_list, self.env)
-
-    def eval(self, env):
-        Env.outer = env
-        self.stmt_list.eval(self.env)
-        print self.env
-
-
-class FunctionStatement(object):
-
-    def __init__(self, name, parms, body):
-        self.name, self.body = name, body
-        self.parms = parms
-
-    def __repr__(self):
-        return 'FunctionStatement(%s, %s)' % (self.name, self.body)
-
-    def __call__(self, *args):
-        return self.eval(self.body, Env(self.parms, args,))
-
-    def eval(self, env=None):
-        self.parms.eval(self.body.env)
-        self.body.eval(env)

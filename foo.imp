@@ -1,8 +1,14 @@
 function water(Count x,Count y, Count z, Count c){
-    z = 5 + x;
-    x = 4;
-    while(x>0){
-        x = x-1
-    };
-    c = 12
+    if (x>45){
+        x=6;
+    }else if (x > 37){
+        x=7;
+    }else if (x > 30){
+        x=7;
+    }else if (x > 20){
+        x=7;
+    }else{
+        x=3;
+    }
+    x=10;
 }
