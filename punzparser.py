@@ -24,7 +24,14 @@ def punzal_parse(tokens):
 
 
 def parser():
-    return Phrase(func_stmt())
+    return Phrase(func_list())
+
+
+def func_list():
+    def process(parsed):
+        func_list = parsed
+        return FunctionDict(func_list)
+    return Rep(func_stmt()) ^ process
 
 
 def func_stmt():
@@ -32,6 +39,18 @@ def func_stmt():
         (((((_, name), _), parms), _), body) = parsed
         return FunctionStatement(name, parms, body)
     return keyword('function') + id + keyword('(') + param_list() + keyword(')') + block_stmt() ^ process
+
+
+def func_call():
+    def process(parsed):
+        ((((name, _), args), _), _) = parsed
+        return FunctionCall(name, args)
+    return id + keyword('(') + args_list() + keyword(')') + keyword(';') ^ process
+
+
+def args_list():
+    separator = keyword(',') ^ (lambda x: lambda l, r: ArguementExpression(l, r))
+    return Exp(arithmetic_expression_value(), separator)
 
 
 def block_stmt():
@@ -43,7 +62,7 @@ def block_stmt():
 
 def param_list():
     # variable = parser PROCESS function
-    separator = keyword(',') ^ (lambda x: lambda l, r: ParameterExpression(l, r))
+    separator = keyword(',') ^ (lambda x: lambda l, r: ArguementExpression(l, r))
     return Exp(declaration_stmt(), separator)
 
 
@@ -56,8 +75,6 @@ def declaration_stmt():
 
 # Statements
 def stmt_list():
-    # separator = keyword(';') ^ (lambda x: lambda l, r: CompoundStatement(l, r))
-    # return Exp(stmt(), separator)
     def process(parsed):
         stmt_list = parsed
         return StatementList(stmt_list)
@@ -67,7 +84,15 @@ def stmt_list():
 def stmt():
     return assign_stmt() | \
         selection_stmt() | \
-        iteration_stmt()
+        iteration_stmt() | \
+        func_call()
+
+
+def returnstmt():
+    def process(parsed):
+        ((_, ret), _) = parsed
+        return ReturnStatement(ret)
+    return keyword('return') + arithmetic_expression_value() + keyword(';') ^ process
 
 
 def assign_stmt():

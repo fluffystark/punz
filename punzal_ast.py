@@ -1,4 +1,5 @@
 from equality import *
+from predef_func import *
 
 
 class Statement(Equality):
@@ -14,9 +15,10 @@ class Bexp(Equality):
 
 
 class Env(dict):
-    def __init__(self, outer=None, stmt_list=list()):
+    def __init__(self, outer=None, stmt_list=list(), funcdict=dict()):
         self.outer = outer
         self.stmt_list = stmt_list
+        self.funcdict = funcdict
 
     def find(self, var):
         return self if (var in self) else self.outer.find(var)
@@ -31,26 +33,78 @@ class BlockStatement(Statement):
         return 'BlockStatement(%s, %s)' % (self.stmt_list, self.env)
 
     def eval(self, env):
-        Env.outer = env
+        self.env.outer = env
         self.stmt_list.eval(self.env)
-        print self.env
+
+
+class FunctionDict(Statement):
+    def __init__(self, function_list=list()):
+        self.function_list = function_list
+
+    def __repr__(self):
+        return 'FunctionDict(%s)' % (self.function_list)
+
+    def eval(self, env):
+        for function in self.function_list:
+            env.funcdict[function.name] = function
+        env.funcdict['main'].eval(env)
+
+
+class FunctionCall(Statement):
+    def __init__(self, name, args):
+        self.name = name
+        self.args = args
+
+    def __repr__(self):
+        return 'FunctionCall(%s, %s\n)' % (self.name, self.args)
+
+    def eval(self, env=Env()):
+        var = env.funcdict[self.name]
+        arg_list = appendlist(self.args.eval(env))
+        print var(arg_list)
+
+
+class ReturnStatement(Statement):
+    def __init__(self, ret):
+        self.ret = ret
+
+    def __repr__(self):
+        return 'ReturnStatement(%s)' % (self.ret)
+
+    def eval(self, env=None):
+        var = env.find(self.name)[self.name]
+        var['BODY'](self.args)
 
 
 class FunctionStatement(object):
-
     def __init__(self, name, parms, body):
         self.name, self.body = name, body
         self.parms = parms
 
     def __repr__(self):
-        return 'FunctionStatement(%s, %s)' % (self.name, self.body)
+        return 'FunctionStatement(%s, %s\n)' % (self.name, self.body)
 
-    def __call__(self, *args):
-        return self.eval(self.body, Env(self.parms, args,))
+    def __call__(self, args, env=Env()):
+        params = self.appendlist(self.parms.eval(env))
+        for parm, arg in zip(params, args):
+            var = env.find(self.parm)[self.parm]
+            var['VALUE'] = self.cast(var['TYPE'], arg)
+        for var in env:
+            print var
+        return self.body.eval(env)
 
-    def eval(self, env=None):
+    def eval(self, env=Env()):
         self.parms.eval(self.body.env)
-        self.body.eval(env)
+        self.body.eval(self.body.env)
+
+    def appendlist(self, x=list()):
+        ret = list()
+        for i in x:
+            if type(i) is list:
+                ret = self.appendlist(i)
+            else:
+                ret.append(i)
+        return ret
 
 
 class DeclarationStatement(Statement):
@@ -63,6 +117,19 @@ class DeclarationStatement(Statement):
 
     def eval(self, env):
         env[self.name] = {"TYPE": self.data_type, "VALUE": 0}
+        return self.name
+
+
+class ArguementExpression(Statement):
+    def __init__(self, first, second):
+        self.first = first
+        self.second = second
+
+    def __repr__(self):
+        return 'ArguementExpression(%s, %s)\n' % (self.first, self.second)
+
+    def eval(self, env):
+        return [self.first.eval(env), self.second.eval(env)]
 
 
 class ParameterExpression(Statement):
@@ -71,7 +138,7 @@ class ParameterExpression(Statement):
         self.second = second
 
     def __repr__(self):
-        return 'ParameterExpression(%s, %s)' % (self.first, self.second)
+        return 'ParameterExpression(%s, %s)\n' % (self.first, self.second)
 
     def eval(self, env):
         self.first.eval(env)
@@ -84,7 +151,7 @@ class AssignStatement(Statement):
         self.arithmeticExp = aexp
 
     def __repr__(self):
-        return 'AssignStatement(%s, %s)' % (self.name, self.arithmeticExp)
+        return 'AssignStatement(%s, %s)\n' % (self.name, self.arithmeticExp)
 
     def eval(self, env):
         value = self.arithmeticExp.eval(env)
@@ -103,7 +170,7 @@ class StatementList(Statement):
         self.statement_list = statement_list
 
     def __repr__(self):
-        return 'StatementList(%s)' % (self.statement_list)
+        return 'StatementList(%s)\n' % (self.statement_list)
 
     def eval(self, env):
         for statement in self.statement_list:
@@ -116,7 +183,7 @@ class CompoundStatement(Statement):
         self.second = second
 
     def __repr__(self):
-        return 'CompoundStatement(%s, %s)' % (self.first, self.second)
+        return 'CompoundStatement(%s, %s)\n' % (self.first, self.second)
 
     def eval(self, env):
         self.first.eval(env)
@@ -130,7 +197,7 @@ class SelectionStatement(Statement):
         self.else_stmt = else_stmt
 
     def __repr__(self):
-        return 'SelectionStatement(%s, %s, %s)' % (self.if_stmt, self.elif_group, self.else_stmt)
+        return 'SelectionStatement(%s, %s, %s)\n' % (self.if_stmt, self.elif_group, self.else_stmt)
 
     def eval(self, env):
         if_value = self.if_stmt.eval(env)
@@ -208,7 +275,7 @@ class WhileStatement(Statement):
         self.env = Env()
 
     def __repr__(self):
-        return 'WhileStatement(%s, %s)' % (self.condition, self.body)
+        return 'WhileStatement(%s, %s)\n' % (self.condition, self.body)
 
     def eval(self, env):
         self.env.outer = env
@@ -224,7 +291,7 @@ class DoWhileStatement(Statement):
         self.body = body
 
     def __repr__(self):
-        return 'DoWhileStatement(%s, %s)' % (self.condition, self.body)
+        return 'DoWhileStatement(%s, %s)\n' % (self.condition, self.body)
 
     def eval(self, env):
         condition_value = self.condition.eval(env)
@@ -263,7 +330,7 @@ class BinaryOpArithmeticExp(Aexp):
         self.right = right
 
     def __repr__(self):
-        return 'BinaryOpArithmeticExp(%s, %s, %s)' % (self.op, self.left, self.right)
+        return 'BinaryOpArithmeticExp(%s, %s, %s)\n' % (self.op, self.left, self.right)
 
     def eval(self, env):
         left_value = self.left.eval(env)
@@ -348,4 +415,3 @@ class NotBooleanExp(Bexp):
     def eval(self, env):
         value = self.exp.eval(env)
         return not value
-
