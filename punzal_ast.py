@@ -50,7 +50,7 @@ class FunctionDict(Statement):
     def eval(self, env):
         for function in self.function_list:
             env.funcdict[function.name] = function
-        env.funcdict['main'].eval(env)
+        return env.funcdict['main'].eval(env)
 
 
 class FunctionCall(Statement):
@@ -63,7 +63,9 @@ class FunctionCall(Statement):
 
     def eval(self, env=Env()):
         var = env.funcdict[self.name]
-        arg_list = self.appendlist(self.args.eval(env))
+        arg_list = list()
+        if self.args is not None:
+            arg_list = self.appendlist(self.args.eval(env))
         return var(arg_list)
 
     def appendlist(self, x=list()):
@@ -87,7 +89,6 @@ class ReturnStatement(Statement):
         return 'ReturnStatement(%s)' % (self.ret)
 
     def eval(self, env=None):
-        print type(self.ret)
         if type(self.ret) is int:
             pass
         elif type(self.ret) is not str:
@@ -106,15 +107,18 @@ class FunctionStatement(object):
         return 'FunctionStatement(%s, %s\n)' % (self.name, self.body)
 
     def __call__(self, args):
-        params = self.appendlist(self.parms.eval(self.body.env))
-        for parm, arg in zip(params, args):
-            var = self.body.env.find(parm)[parm]
-            var['VALUE'] = self.cast(var['TYPE'], arg)
+        if len(args) != 0:
+            params = self.appendlist(self.parms.eval(self.body.env))
+            for parm, arg in zip(params, args):
+                var = self.body.env.find(parm)[parm]
+                var['VALUE'] = self.cast(var['TYPE'], arg)
         self.body.eval(self.body.env)
         return self.body.env['return']['VALUE']
 
     def eval(self, env=Env()):
-        self.parms.eval(self.body.env)
+        if self.parms is not None:
+            self.parms.eval(self.body.env)
+            print self.body.env
         self.body.eval(self.body.env)
         print self.body.env
 
@@ -128,7 +132,7 @@ class FunctionStatement(object):
         return ret
 
     def cast(self, type, value):
-        if type == 'Count':
+        if type == 'Counter':
             return int(value)
         if type == 'Real':
             return float(value)
@@ -184,11 +188,22 @@ class AssignStatement(Statement):
         if type(self.name) is not str:
             self.name = self.name.eval(env)
         value = self.arithmeticExp.eval(env)
-        var = env.find(self.name)
-        var[self.name]['VALUE'] = self.cast(var[self.name]['TYPE'], value)
+        if type(value) is list:
+            value = env.find(value[0])[value[0]]['VALUE'][value[1]]
+        if type(self.name) is not list:
+            var = env.find(self.name)
+        else:
+            var = env.find(self.name[0])
+        if type(self.name) is list:
+            var[self.name[0]]['VALUE'][self.name[1]] = value
+        else:
+            if var[self.name]['TYPE'] == "Counter" or var[self.name]['TYPE'] == "Real":
+                var[self.name]['VALUE'] = self.cast(var[self.name]['TYPE'], value)
+            elif var[self.name]['TYPE'] == "Set":
+                SetInitialization(self.name, value).eval(env)
 
     def cast(self, data_type, value):
-        if data_type == 'Count':
+        if data_type == 'Counter':
             return int(value)
         if data_type == 'Real':
             return float(value)
@@ -458,7 +473,70 @@ class Set(Statement):
     def eval(self, env):
         env[self.name] = {"TYPE": self.data_type, "VALUE": list()}
         i = 0
-        while(i < self.size.eval(env)):
-            env[self.name]['VALUE'].append(0)
-            i += 1
+        if self.size is not None:
+            while(i < self.size.eval(env)):
+                env[self.name]['VALUE'].append(0)
+                i += 1
         return self.name
+
+
+class SetInitialization(Statement):
+    def __init__(self, name, args):
+            self.name = name
+            self.args = args
+
+    def eval(self, env):
+        print self.name
+        array = env.find(self.name)[self.name]['VALUE']
+        size = len(array)
+        for i in range(size):
+            if type(self.args) is list:
+                try:
+                    array[i] = self.args[i]
+                except IndexError:
+                    pass
+            elif type(self.args) is int:
+                try:
+                    array[i] = self.args
+                    break
+                except IndexError:
+                    pass
+
+
+class SetAssignment(Statement):
+    def __init__(self, name, pos):
+            self.name = name
+            self.pos = pos
+
+    def __repr__(self):
+        return 'SetAssignment(%s %s)' % (self.name, self.pos)
+
+    def eval(self, env):
+        return [self.name, self.pos.eval(env)]
+
+
+class PrintStatement(Statement):
+    def __init__(self, args):
+        self.args = args
+
+    def __repr__(self):
+        return 'PrintStatement(%s)' % (self.args)
+
+    def eval(self, env):
+        arg_list = self.args.eval(env)
+        final = ""
+        for arg in arg_list:
+            final += str(arg)
+        print final
+
+
+class StringStatement(Statement):
+    def __init__(self, string):
+        self.string = string
+
+    def __repr__(self):
+        return 'StringStatement(%s)' % (self.string)
+
+    def eval(self, env):
+        length = len(self.string)
+        return self.string[1:length-1]

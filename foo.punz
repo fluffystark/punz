@@ -1,0 +1,21 @@
+
+function main(){
+    Counter Emil = 10;
+    Real x;
+    Real z;
+    if (x>45){
+        x=6;
+    }else if (x > 37){
+        x=7;
+    }else if (x > 30){
+        x=7;
+    }else if (x > 20){
+        x=7;
+    }else{
+        z=3;
+    }
+}
+
+function another(){
+    return 6;
+}

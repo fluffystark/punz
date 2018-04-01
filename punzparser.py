@@ -12,14 +12,16 @@ def keyword(kw):
 # we should change this to something representing real num
 
 
-num = Tag(COUNT) ^ (lambda i: int(i))
+num = Tag(REAL) ^ (lambda i: float(i))
 id = Tag(ID)
-count = Tag(COUNT)
+string = Tag(STRING)
+counter = Tag(COUNT)
 
 
 # Top level parser
 def punzal_parse(tokens):
     ast = parser()(tokens, 0)
+    print ast
     return ast
 
 
@@ -38,14 +40,14 @@ def func_stmt():
     def process(parsed):
         (((((_, name), _), parms), _), body) = parsed
         return FunctionStatement(name, parms, body)
-    return keyword('function') + id + keyword('(') + param_list() + keyword(')') + block_stmt() ^ process
+    return keyword('function') + id + keyword('(') + Opt(param_list()) + keyword(')') + block_stmt() ^ process
 
 
 def func_call():
     def process(parsed):
         ((((name, _), args), _), _) = parsed
         return FunctionCall(name, args)
-    return id + keyword('(') + args_list() + keyword(')') + keyword(';') ^ process
+    return id + keyword('(') + Opt(args_list()) + keyword(')') + keyword(';') ^ process
 
 
 def args_list():
@@ -82,7 +84,38 @@ def aggregate_declaration():
         (((((data_type, variable), _), size), _), _) = parsed
         return Set(variable, size, data_type)
     return keyword('Set') + id + keyword('[') + \
-        arithmetic_expression_value() + keyword(']') + Opt(keyword(';')) ^ process
+        Opt(arithmetic_expression_value()) + keyword(']') + Opt(keyword(';')) ^ process
+
+
+def aggregate_assignment():
+    def process(parsed):
+        (((variable, _), pos), _) = parsed
+        return SetAssignment(variable, pos)
+    return id + keyword('[') + arithmetic_expression_value() + keyword(']') ^ process
+
+
+def print_stmt():
+    def process(parsed):
+        (((_, strings), _), _) = parsed
+        return PrintStatement(strings)
+    return keyword('Print') + keyword('(') + print_term() + keyword(')') + keyword(';') ^ process
+
+
+def print_term():
+    return print_args() | string_term()
+
+
+def print_args():
+    separator = keyword('+') ^ (lambda x: lambda l, r: ArguementExpression(l, r))
+    return Exp(string_term(), separator)
+
+
+def string_term():
+    return string_stmt() | arithmetic_expression()
+
+
+def string_stmt():
+    return (string ^ (lambda i: StringStatement(i)))
 
 
 # Statements
@@ -98,7 +131,8 @@ def stmt():
         selection_stmt() | \
         iteration_stmt() | \
         func_call() | \
-        declaration_stmt()
+        declaration_stmt() | \
+        print_stmt()
 
 
 def return_stmt():
@@ -118,11 +152,19 @@ def assign_stmt():
 
 
 def assignment_term():
-    return declaration_stmt() | id
+    return aggregate_assignment() | declaration_stmt() | id
 
 
 def assignment_group():
-    return arithmetic_expression() + keyword(';') | func_call()
+    return arithmetic_expression() + keyword(';') | \
+        func_call() | aggregate_dataset() | aggregate_assignment() + keyword(';')
+
+
+def aggregate_dataset():
+    def process(parsed):
+        (((_, args), _), _) = parsed
+        return args
+    return keyword('{') + args_list() + keyword('}') + keyword(';') ^ process
 
 
 def if_stmt():
@@ -273,7 +315,7 @@ def any_operator_in_list(ops):
 
 
 def any_data_type_in_list():
-    return keyword('Count') | keyword('Real')
+    return keyword('Counter') | keyword('Real')
 
 
 # Operator keywords and precedence levels
