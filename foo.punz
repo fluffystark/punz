@@ -21,20 +21,16 @@ function main(){
     master[2] = 57;
     master[1] = 7;
     z.append(56);
-    Print(z);
-    y = factorial(x);
+    Print(master);
+    Real q = 0;
+    q = sample(10,5);
 }
 
-function factorial(Real x){
-    Real ret = 0;
-    Real y = 0;
-    Real z;
-    if(x == 1){
-        ret = 1;
-    }else{
-        y = x - 1;
-        z = factorial(y);
-        ret = x * z;
+
+function sample(Real x, Real y){
+    x = x - 1;
+    if(x>y){
+        x = sample(x,y);
     }
-    return ret;
+    return x;
 }

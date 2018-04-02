@@ -89,7 +89,7 @@ class ReturnStatement(Statement):
         return 'ReturnStatement(%s)' % (self.ret)
 
     def eval(self, env=None):
-        if type(self.ret) is int:
+        if type(self.ret) is int or type(self.ret) is float:
             pass
         elif type(self.ret) is not str:
             self.ret = self.ret.eval(env)
