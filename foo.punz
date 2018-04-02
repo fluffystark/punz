@@ -1,7 +1,7 @@
 
 function main(){
     Counter Emil = 10;
-    Real x;
+    Real x = 2;
     Real z;
     if (x>45){
         x=6;
@@ -14,8 +14,11 @@ function main(){
     }else{
         z=3;
     }
-}
-
-function another(){
-    return 6;
+    Set master[3];
+    Set another[5];
+    another[4] = 2;
+    master[2] = 57;
+    master[1] = 7;
+    master.append(56);
+    Print(z);
 }

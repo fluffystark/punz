@@ -21,7 +21,6 @@ counter = Tag(COUNT)
 # Top level parser
 def punzal_parse(tokens):
     ast = parser()(tokens, 0)
-    print ast
     return ast
 
 
@@ -47,6 +46,20 @@ def func_call():
     def process(parsed):
         ((((name, _), args), _), _) = parsed
         return FunctionCall(name, args)
+    return id + keyword('(') + Opt(args_list()) + keyword(')') + keyword(';') ^ process
+
+
+def built_func_call():
+    def process(parsed):
+        ((name, _), args) = parsed
+        return BuiltFunctionCall(name, args)
+    return id + keyword('.') + class_func_call() ^ process
+
+
+def class_func_call():
+    def process(parsed):
+        ((((name, _), args), _), _) = parsed
+        return ClassFunctionCall(name, args)
     return id + keyword('(') + Opt(args_list()) + keyword(')') + keyword(';') ^ process
 
 
@@ -132,7 +145,7 @@ def stmt():
         iteration_stmt() | \
         func_call() | \
         declaration_stmt() | \
-        print_stmt()
+        print_stmt() | built_func_call()
 
 
 def return_stmt():
@@ -157,7 +170,8 @@ def assignment_term():
 
 def assignment_group():
     return arithmetic_expression() + keyword(';') | \
-        func_call() | aggregate_dataset() | aggregate_assignment() + keyword(';')
+        func_call() | aggregate_dataset() | aggregate_assignment() + keyword(';') \
+        | built_func_call()
 
 
 def aggregate_dataset():
@@ -327,6 +341,6 @@ arithmetic_expression_precedence_levels = [
 ]
 
 boolean_expression_precedence_levels = [
-    ['and'],
-    ['or'],
+    ['AND'],
+    ['OR'],
 ]

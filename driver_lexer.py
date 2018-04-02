@@ -3,7 +3,7 @@ from lexer import *
 from tok_expr import *
 
 if __name__ == '__main__':
-    filename = 'foo.imp'
+    filename = 'foo.punz'
     file = open(filename)
     characters = file.read()
     file.close()

@@ -1,5 +1,6 @@
 from equality import *
 from predef_func import *
+import numpy
 
 
 class Statement(Equality):
@@ -195,7 +196,7 @@ class AssignStatement(Statement):
         else:
             var = env.find(self.name[0])
         if type(self.name) is list:
-            var[self.name[0]]['VALUE'][self.name[1]] = value
+            var[self.name[0]]['VALUE'][int(self.name[1])] = value
         else:
             if var[self.name]['TYPE'] == "Counter" or var[self.name]['TYPE'] == "Real":
                 var[self.name]['VALUE'] = self.cast(var[self.name]['TYPE'], value)
@@ -525,8 +526,11 @@ class PrintStatement(Statement):
     def eval(self, env):
         arg_list = self.args.eval(env)
         final = ""
-        for arg in arg_list:
-            final += str(arg)
+        if type(arg_list) is str:
+            for arg in arg_list:
+                final += str(arg)
+        else:
+            final = arg_list
         print final
 
 
@@ -539,4 +543,68 @@ class StringStatement(Statement):
 
     def eval(self, env):
         length = len(self.string)
-        return self.string[1:length-1]
+        return self.string[1:length - 1]
+
+
+class ClassFunctionCall(Statement):
+    def __init__(self, name, args):
+        self.name = name
+        self.args = args
+
+    def __repr__(self):
+        return 'ClassCall(%s, %s)' % (self.name, self.args)
+
+    def eval(self, env, var):
+        if var["TYPE"] == "Set":
+            if self.name == "total":
+                return self.total(var["VALUE"])
+            elif self.name == "average":
+                return self.average(var["VALUE"])
+            elif self.name == "len":
+                return len(var["VALUE"])
+            elif self.name == "standarddev":
+                return self.sdev(var["VALUE"])
+            elif self.name == "variance":
+                return self.variance(var["VALUE"])
+            elif self.name == "asc":
+                var["VALUE"] = sorted(var["VALUE"])
+            elif self.name == "desc":
+                var["VALUE"] = sorted(var["VALUE"], key=float, reverse=True)
+            elif self.name == "union":
+                arg = self.args.name
+                b = env.find(arg)[arg]['VALUE']
+                var["VALUE"] = list(set().union(var["VALUE"], b))
+            elif self.name == "append":
+                arg = self.args.eval(env)
+                var["VALUE"].append(arg)
+
+    def total(self, var):
+        total = 0
+        for i in var:
+            total += i
+        return total
+
+    def average(self, var):
+        ave = 0
+        total = self.total(var)
+        ave = total / len(var)
+        return ave
+
+    def sdev(self, var):
+        return numpy.std(var)
+
+    def variance(self, var):
+        return numpy.var(var, ddof=1)
+
+
+class BuiltFunctionCall(Statement):
+    def __init__(self, name, args):
+        self.name = name
+        self.args = args
+
+    def __repr__(self):
+        return 'BuiltFunctionCall(%s, %s)' % (self.name, self.args)
+
+    def eval(self, env):
+        var = env.find(self.name)[self.name]
+        return self.args.eval(env, var)

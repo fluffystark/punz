@@ -6,7 +6,7 @@ if __name__ == '__main__':
     # if len(sys.argv) != 3:
     #     sys.stderr.write('usage: %s filename parsername\n' % sys.argv[0])
     #     sys.exit(1)
-    filename = 'foo.imp'
+    filename = 'foo.punz'
     file = open(filename)
     characters = file.read()
     file.close()

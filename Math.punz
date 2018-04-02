@@ -1,0 +1,9 @@
+function power(Real base, Counter exponent){
+    Counter i = 0;
+    Real power = 1;
+    while(i < exponent){
+        power = power * base;
+        i = i + 1;
+    }
+    return power;
+}

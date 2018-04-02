@@ -1,0 +1,165 @@
+import Math
+
+
+function total(Set x[], Count length){
+    Count i = 0;
+    Real total = 0;
+    while(i < length){
+        total = total + x[i];
+        i = i + 1;
+    }
+    return total;
+}
+
+
+function average(Set x[], Count length){
+    Real average = 0; 
+    average = total(x, length) / length;
+    return average;
+}
+
+
+function standarddeviation(Set x[], Count length){
+    Real average = 0;
+    average = average(x, length);
+    Count i = 0;
+    Real sd = 0;
+    Real y = 0;
+    while(i < length){
+        y = x[i] - average;
+        if(y < 0){
+            y = y * -1;
+        }
+        sd = sd + y;
+        i = i + 1;
+    }
+    return sd;
+}
+
+
+function variance(Set x[], Count length){
+    Real average = 0;
+    average = average(x, length);
+    Count i = 0;
+    Real variance = 0;
+    Real y = 0;
+    while(i < length){
+        y = x[i] - average;
+        variance = variance + power(y, 2);
+        i = i + 1;
+    }
+    return variance;
+}
+
+
+function ascending(Set x[], Count length){
+    Count i = 0;
+    Count j = 0;
+    Count temp = 0;
+    while(i < length - 1){
+        j = 0;
+        while(j < length - i - 1){
+            if(x[j] > x[j+1]){
+                temp = x[j];
+                x[j] = x[j+1];
+                x[j+1] = temp;
+            }
+            j = j + 1;
+        }
+        i = i + 1;
+    }
+    return x;
+}
+
+
+function descending(Set x[], Count length){
+    Count i = 0;
+    Count j = 0;
+    Count temp = 0;
+    while(i < length - 1){
+        j = 0;
+        while(j < length - i - 1){
+            if(x[j] < x[j+1]){
+                temp = x[j];
+                x[j] = x[j+1];
+                x[j+1] = temp;
+            }
+            j = j + 1;
+        }
+        i = i + 1;
+    }
+    return x;
+}
+
+
+function union(Set x[], Count lengthx, Set y[], Count lengthy){
+    Set x = ascending(x);
+    Set y = ascending(y);
+    Count i = 0;
+    Count j = 0;
+    Count size = lengthy;
+    if(lengthx > lengthy){
+        size = lengthx;
+    }
+    Set z[size];
+    Count c = 0;
+    while(i < lengthx AND j < lengthy){
+        if(x[i] < y[j]){
+            z[c] = x[i];
+            i = i + 1;
+        }
+        else if(y[j] < x[i]){
+            z[c] = y[j];
+            j = j + 1;
+        }
+        else{
+            z[c] = x[i];
+            i = i + 1;
+            j = j + 1;
+        }
+        c = c + 1;
+    }
+    c = c - 1;
+    i = 0;
+    SET ret[c];
+    while(i < c){
+        ret[i] = z[i];
+    }
+    return ret;
+}
+
+
+function intersection(Set x[], Count lengthx, Set y[], Count lengthy){
+    Set x = ascending(x);
+    Set y = ascending(y);
+    Count i = 0;
+    Count j = 0;
+    Count size = lengthy;
+    if(lengthx > lengthy){
+        size = lengthx;
+    }
+    Set z[size];
+    Count c = 0;
+    while(i < lengthx AND j < lengthy){
+        if(x[i] < y[j]){
+            i = i + 1;
+        }
+        else if(y[j] < x[i]){
+            j = j + 1;
+        }
+        else{
+            z[c] = x[i];
+            i = i + 1;
+            j = j + 1;
+            c = c + 1;
+        }
+    }
+    i = 0;
+    c = c - 1;
+    SET ret[c];
+    while(i < c){
+        ret[i] = z[i];
+    }
+    return ret;
+}
+
