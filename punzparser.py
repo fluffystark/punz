@@ -259,7 +259,7 @@ def boolean_expression_not():
 
 
 def boolean_expression_relational_operation():
-    relational_operators = ['<', '<=', '>', '>=', '=', '!=']
+    relational_operators = ['<', '<=', '>', '>=', '==', '!=']
     return arithmetic_expression() + any_operator_in_list(relational_operators) \
         + arithmetic_expression() ^ process_relational_operation
 

@@ -27,6 +27,5 @@ if __name__ == '__main__':
     ast = parse_result.value
     env = Env()
     x = ast.eval(env)
-    print x
 else:
     print "File is not readable"

@@ -1,5 +1,4 @@
 from equality import *
-from predef_func import *
 import numpy
 
 
@@ -413,7 +412,7 @@ class RelOpBooleanExp(Bexp):
             value = left_value > right_value
         elif self.op == '>=':
             value = left_value >= right_value
-        elif self.op == '=':
+        elif self.op == '==':
             value = left_value == right_value
         elif self.op == '!=':
             value = left_value != right_value
@@ -577,6 +576,8 @@ class ClassFunctionCall(Statement):
             elif self.name == "append":
                 arg = self.args.eval(env)
                 var["VALUE"].append(arg)
+        else:
+            print "Only Set Datatypes have pre-defined functions"
 
     def total(self, var):
         total = 0

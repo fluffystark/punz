@@ -1,8 +1,9 @@
 
 function main(){
-    Counter Emil = 10;
+    Real Emil = 10;
     Real x = 2;
     Real z;
+    Real y;
     if (x>45){
         x=6;
     }else if (x > 37){
@@ -19,6 +20,21 @@ function main(){
     another[4] = 2;
     master[2] = 57;
     master[1] = 7;
-    master.append(56);
+    z.append(56);
     Print(z);
+    y = factorial(x);
+}
+
+function factorial(Real x){
+    Real ret = 0;
+    Real y = 0;
+    Real z;
+    if(x == 1){
+        ret = 1;
+    }else{
+        y = x - 1;
+        z = factorial(y);
+        ret = x * z;
+    }
+    return ret;
 }

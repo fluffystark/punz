@@ -16,6 +16,7 @@ token_exprs = [
     (r'{', RESERVED),       # block start
     (r'}', RESERVED),       # block end
     (r'\.', RESERVED),       # member
+    (r'==', RESERVED),       # ==
     (r'=', RESERVED),        # =
     (r',', RESERVED),        # ;
     (r';', RESERVED),        # ;
@@ -31,7 +32,6 @@ token_exprs = [
     (r'>=', RESERVED),       # >=
     (r'>', RESERVED),        # >
     (r'!=', RESERVED),       # !=
-    (r'==', RESERVED),       # ==
     (r'AND', RESERVED),  # Relational And
     (r'OR', RESERVED),  # Relational OR
     (r'!', RESERVED),  # Not
